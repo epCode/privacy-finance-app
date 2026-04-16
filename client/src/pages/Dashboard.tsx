@@ -1,233 +1,250 @@
-import { useMemo } from 'react';
-import { useFinance } from '@/contexts/FinanceContext';
+/**
+ * Dashboard Page - Overview of accounts, upcoming bills, and financial summary
+ * Design: Minimalist Functional - Clear at-a-glance financial status
+ */
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Link } from 'wouter';
-import { TrendingUp, TrendingDown, Wallet, AlertCircle } from 'lucide-react';
-import { format, startOfMonth, endOfMonth } from 'date-fns';
+import { useApp } from '@/contexts/AppContext';
+import {
+  formatCurrency,
+  formatDate,
+  formatRelativeTime,
+  getMonthStart,
+  getMonthEnd,
+} from '@/lib/utils';
+import { AlertCircle, TrendingDown, TrendingUp, Calendar } from 'lucide-react';
+import { useLocation } from 'wouter';
 
 export default function Dashboard() {
-  const { accounts, transactions, recurringPayments, notifications, markNotificationAsRead } = useFinance();
+  const { accounts, transactions, autoPays, calculateBalance } = useApp();
+  const [, navigate] = useLocation();
 
-  // Calculate totals
-  const totals = useMemo(() => {
-    const totalBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0);
-    const thisMonth = new Date();
-    const monthStart = startOfMonth(thisMonth);
-    const monthEnd = endOfMonth(thisMonth);
+  // Calculate total balance
+  const totalBalance = accounts.reduce((sum, account) => {
+    return sum + calculateBalance(account.id);
+  }, 0);
 
-    const monthlyIncome = transactions
-      .filter(
-        (t) =>
-          t.type === 'income' &&
-          new Date(t.date) >= monthStart &&
-          new Date(t.date) <= monthEnd
-      )
-      .reduce((sum, t) => sum + t.amount, 0);
+  // Get current month transactions
+  const monthStart = getMonthStart();
+  const monthEnd = getMonthEnd();
+  const monthTransactions = transactions.filter(
+    (t) => t.date >= monthStart && t.date <= monthEnd
+  );
 
-    const monthlyExpenses = transactions
-      .filter(
-        (t) =>
-          t.type === 'expense' &&
-          new Date(t.date) >= monthStart &&
-          new Date(t.date) <= monthEnd
-      )
-      .reduce((sum, t) => sum + t.amount, 0);
+  const monthIncome = monthTransactions
+    .filter((t) => t.type === 'income')
+    .reduce((sum, t) => sum + t.amount, 0);
 
-    return {
-      totalBalance,
-      monthlyIncome,
-      monthlyExpenses,
-      monthlyNet: monthlyIncome - monthlyExpenses,
-    };
-  }, [accounts, transactions]);
+  const monthExpenses = monthTransactions
+    .filter((t) => t.type === 'expense')
+    .reduce((sum, t) => sum + t.amount, 0);
 
-  // Get recent transactions
-  const recentTransactions = useMemo(() => {
-    return transactions.slice(0, 5);
-  }, [transactions]);
+  // Get upcoming bills (next 7 days)
+  const now = Date.now();
+  const sevenDaysFromNow = now + 7 * 24 * 60 * 60 * 1000;
+  const upcomingBills = autoPays
+    .filter((ap) => ap.isActive && ap.nextDueDate >= now && ap.nextDueDate <= sevenDaysFromNow)
+    .sort((a, b) => a.nextDueDate - b.nextDueDate);
 
-  // Get unread notifications
-  const unreadNotifications = useMemo(() => {
-    return notifications.filter((n) => !n.isRead);
-  }, [notifications]);
+  // Get non-constant bills due soon
+  const nonConstantBillsDue = autoPays.filter(
+    (ap) => ap.isActive && ap.isNonConstant && ap.nextDueDate <= sevenDaysFromNow
+  );
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Dashboard</h1>
-        <p className="text-muted-foreground mt-1">Overview of your finances</p>
-      </div>
+    <div className="min-h-screen bg-slate-50 p-6">
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-slate-900 mb-2">Dashboard</h1>
+          <p className="text-slate-600">Your financial overview</p>
+        </div>
 
-      {/* Alerts */}
-      {unreadNotifications.length > 0 && (
-        <Card className="border-blue-200 bg-blue-50">
-          <CardContent className="pt-6">
-            <div className="flex gap-4">
-              <AlertCircle className="text-blue-600 flex-shrink-0 mt-0.5" size={20} />
-              <div className="flex-1">
-                <h3 className="font-semibold text-blue-900">Pending Actions</h3>
-                <p className="text-sm text-blue-800 mt-1">
-                  You have {unreadNotifications.length} notification{unreadNotifications.length > 1 ? 's' : ''} requiring attention.
+        {/* Top Stats */}
+        <div className="grid gap-4 md:grid-cols-3 mb-8">
+          {/* Total Balance */}
+          <Card className="border-slate-200">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-slate-600">Total Balance</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p
+                className={`text-3xl font-mono font-bold ${
+                  totalBalance < 0 ? 'text-red-600' : 'text-slate-900'
+                }`}
+              >
+                {formatCurrency(totalBalance)}
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Month Income */}
+          <Card className="border-slate-200">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-slate-600">This Month Income</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-baseline gap-2">
+                <TrendingUp className="w-5 h-5 text-green-600" />
+                <p className="text-3xl font-mono font-bold text-green-600">
+                  {formatCurrency(monthIncome)}
                 </p>
-                <div className="mt-3 space-y-2">
-                  {unreadNotifications.slice(0, 3).map((notif) => (
-                    <div key={notif.id} className="flex items-start justify-between">
-                      <div className="text-sm">{notif.message}</div>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => markNotificationAsRead(notif.id!)}
-                      >
-                        Done
-                      </Button>
-                    </div>
-                  ))}
-                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+            </CardContent>
+          </Card>
 
-      {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Balance</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totals.totalBalance.toFixed(2)}</div>
-            <p className="text-xs text-muted-foreground mt-1">Across all accounts</p>
-          </CardContent>
-        </Card>
+          {/* Month Expenses */}
+          <Card className="border-slate-200">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-slate-600">
+                This Month Expenses
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-baseline gap-2">
+                <TrendingDown className="w-5 h-5 text-red-600" />
+                <p className="text-3xl font-mono font-bold text-red-600">
+                  {formatCurrency(monthExpenses)}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <TrendingUp size={16} className="text-green-600" />
-              Monthly Income
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{totals.monthlyIncome.toFixed(2)}</div>
-            <p className="text-xs text-muted-foreground mt-1">This month</p>
-          </CardContent>
-        </Card>
+        <div className="grid gap-6 lg:grid-cols-3">
+          {/* Accounts Summary */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Upcoming Bills Alert */}
+            {nonConstantBillsDue.length > 0 && (
+              <Card className="border-amber-200 bg-amber-50">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center gap-2">
+                    <AlertCircle className="w-5 h-5 text-amber-600" />
+                    <CardTitle className="text-amber-900">Action Required</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-amber-800 mb-3">
+                    {nonConstantBillsDue.length} non-constant bill
+                    {nonConstantBillsDue.length !== 1 ? 's' : ''} need your confirmation:
+                  </p>
+                  <ul className="space-y-2">
+                    {nonConstantBillsDue.map((bill) => {
+                      return (
+                        <li key={bill.id} className="text-sm text-amber-800">
+                          <strong>{bill.name}</strong> on {formatDate(bill.nextDueDate)}
+                          {bill.customNotificationMessage && (
+                            <p className="text-xs mt-1 italic">{bill.customNotificationMessage}</p>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => navigate('/autopay')}
+                    className="mt-4 border-amber-300 text-amber-900 hover:bg-amber-100"
+                  >
+                    Review Bills
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
 
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <TrendingDown size={16} className="text-red-600" />
-              Monthly Expenses
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">{totals.monthlyExpenses.toFixed(2)}</div>
-            <p className="text-xs text-muted-foreground mt-1">This month</p>
-          </CardContent>
-        </Card>
+            {/* Accounts */}
+            <Card className="border-slate-200">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">Accounts</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {accounts.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-slate-600 mb-4">No accounts created yet</p>
+                    <Button variant="outline" onClick={() => navigate('/accounts')}>
+                      Create Account
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {accounts.map((account) => {
+                      const balance = calculateBalance(account.id);
+                      return (
+                        <div
+                          key={account.id}
+                          className="flex justify-between items-center p-3 bg-slate-50 rounded"
+                        >
+                          <div>
+                            <p className="font-semibold text-slate-900">{account.name}</p>
+                            <p className="text-xs text-slate-500">{account.type}</p>
+                          </div>
+                          <p
+                            className={`font-mono font-bold ${
+                              balance < 0 ? 'text-red-600' : 'text-slate-900'
+                            }`}
+                          >
+                            {formatCurrency(balance, account.currency)}
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
 
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Monthly Net</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className={`text-2xl font-bold ${totals.monthlyNet >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-              {totals.monthlyNet.toFixed(2)}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">Income - Expenses</p>
-          </CardContent>
-        </Card>
+          {/* Upcoming Bills */}
+          <Card className="border-slate-200 h-fit">
+            <CardHeader className="pb-3">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-slate-600" />
+                <CardTitle className="text-lg">Upcoming Bills</CardTitle>
+              </div>
+              <CardDescription>Next 7 days</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {upcomingBills.length === 0 ? (
+                <p className="text-sm text-slate-600 text-center py-4">No bills due soon</p>
+              ) : (
+                <div className="space-y-3">
+                  {upcomingBills.map((bill) => {
+                    const account = accounts.find((a) => a.id === bill.accountId);
+                    return (
+                      <div key={bill.id} className="p-3 border border-slate-200 rounded-lg">
+                        <div className="flex justify-between items-start mb-2">
+                          <p className="font-semibold text-slate-900 text-sm">{bill.name}</p>
+                          <span className="text-xs bg-slate-100 text-slate-700 px-2 py-1 rounded">
+                            {bill.frequency}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-600 mb-2">{bill.category}</p>
+                        <div className="flex justify-between items-center">
+                          <p className="font-mono font-bold text-sm text-slate-900">
+                            {formatCurrency(bill.defaultAmount, account?.currency)}
+                          </p>
+                          <p className="text-xs text-teal-700 font-semibold">
+                            {formatRelativeTime(bill.nextDueDate)}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate('/autopay')}
+                className="w-full mt-4"
+              >
+                Manage Bills
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       </div>
-
-      {/* Accounts Overview */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Your Accounts</CardTitle>
-          <CardDescription>Quick view of all your accounts</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {accounts.map((account) => (
-              <div key={account.id} className="flex items-center justify-between p-3 rounded-lg bg-secondary/50">
-                <div className="flex items-center gap-3">
-                  <Wallet size={20} className="text-muted-foreground" />
-                  <div>
-                    <div className="font-medium">{account.name}</div>
-                    <div className="text-xs text-muted-foreground capitalize">{account.type}</div>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="font-semibold">{account.balance.toFixed(2)}</div>
-                  <div className="text-xs text-muted-foreground">{account.currency}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-          {accounts.length === 0 && (
-            <p className="text-center text-muted-foreground py-4">
-              No accounts yet. <Link href="/accounts" className="text-primary hover:underline">Create one</Link>
-            </p>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Recent Transactions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Transactions</CardTitle>
-          <CardDescription>Your latest activity</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {recentTransactions.map((transaction) => (
-              <div key={transaction.id} className="flex items-center justify-between p-3 rounded-lg bg-secondary/50">
-                <div>
-                  <div className="font-medium">{transaction.category}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {format(new Date(transaction.date), 'MMM dd, yyyy')}
-                  </div>
-                </div>
-                <div className={`font-semibold ${transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
-                  {transaction.type === 'income' ? '+' : '-'}
-                  {transaction.amount.toFixed(2)}
-                </div>
-              </div>
-            ))}
-          </div>
-          {recentTransactions.length === 0 && (
-            <p className="text-center text-muted-foreground py-4">
-              No transactions yet. <Link href="/transactions" className="text-primary hover:underline">Add one</Link>
-            </p>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Upcoming Payments */}
-      {recurringPayments.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Recurring Payments</CardTitle>
-            <CardDescription>Your scheduled payments</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {recurringPayments.slice(0, 5).map((payment) => (
-                <div key={payment.id} className="flex items-center justify-between p-3 rounded-lg bg-secondary/50">
-                  <div>
-                    <div className="font-medium">{payment.name}</div>
-                    <div className="text-xs text-muted-foreground capitalize">
-                      {payment.frequency} • {payment.isConstant ? 'Auto' : 'Manual'}
-                    </div>
-                  </div>
-                  <div className="font-semibold">{payment.defaultAmount.toFixed(2)}</div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }

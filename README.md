@@ -1,330 +1,109 @@
-# Privacy Finance App
+# Personal Finance Tracker
 
-A privacy-focused, offline-first personal finance application built with Electron, React, and TypeScript. All your financial data is stored locally on your device—nothing is sent to external servers.
+A privacy-focused, offline-capable personal finance web application that runs entirely in your browser using local storage. Track spending, manage recurring bills, and maintain accurate financial records without any data leaving your device.
 
 ## Features
 
-**Account Management**: Create and manage multiple accounts (checking, savings, credit cards, investments, cash) with real-time balance tracking.
+### Core Functionality
 
-**Transaction Tracking**: Record income and expenses with detailed categorization, notes, and timestamps. Full transaction history is maintained locally.
+**Accounts Management** — Create and manage multiple bank accounts with different types (checking, savings, credit, investment). Track balances across all accounts with real-time calculations based on your transactions.
 
-**Transaction Templates**: Create reusable transaction templates to quickly record recurring types of transactions. Use templates to pre-fill transaction forms for faster data entry.
+**Transaction Tracking** — Record one-time income and expense transactions with detailed categorization. Transactions are organized by account and date, with full history available for review and analysis.
 
-**Recurring Payments**: Set up automatic or manual recurring payments with flexible scheduling (daily, weekly, bi-weekly, monthly, quarterly, yearly). Configure "non-constant" payments that require manual confirmation when the bill amount varies month to month.
+**Scheduled Payments (AutoPay)** — Set up recurring bills and payments with flexible scheduling (daily, weekly, bi-weekly, monthly, quarterly, yearly). Choose between constant bills that execute automatically or non-constant bills that require manual confirmation.
 
-**Custom Notifications**: For non-constant recurring payments, set custom notification messages to remind you to verify and update the actual amount before processing.
+**Non-Constant Bills** — For variable expenses like utilities, enable the non-constant flag to receive notifications when bills are due. Confirm the actual amount before the transaction is recorded, ensuring accuracy against your real bank statements. Add custom reminder messages for context.
 
-**Budgeting**: Define spending limits by category on a monthly or yearly basis. Track spending against budgets with visual progress indicators and overspend alerts.
+**Transaction Templates** — Create reusable transaction patterns for quick entry. Save common transactions like "Weekly Groceries" or "Monthly Rent" and apply them with a single click to instantly create transactions.
 
-**Dashboard**: Get an at-a-glance overview of your financial status, including total balance, monthly income/expenses, recent transactions, and upcoming payments.
+**Dashboard Overview** — View your total balance, monthly income and expenses at a glance. See upcoming bills for the next 7 days with alerts for non-constant bills requiring action.
 
-**Offline-First**: The entire application runs locally with Dexie.js (IndexedDB). No internet connection required. All data is stored in your browser's local database.
+**Data Management** — Export your complete financial data as a JSON backup file. Import previously exported backups to restore your data. All data is stored locally in your browser with no cloud synchronization.
 
-**Cross-Platform**: Available for Windows, macOS, Linux, and Android through Electron and Capacitor.
+## Privacy & Security
 
-## Tech Stack
+All data is stored exclusively in your browser's local storage. No information is transmitted to external servers, ensuring complete privacy and control over your financial data. The application works entirely offline—no internet connection required after initial load.
 
-- **Frontend**: React 19 + TypeScript
-- **Desktop**: Electron 41
-- **Local Storage**: Dexie.js (IndexedDB wrapper)
-- **Styling**: Tailwind CSS 4 + shadcn/ui
-- **State Management**: React Context + Hooks
-- **Scheduling**: node-schedule for recurring payment processing
-- **Date Handling**: date-fns
-- **Mobile**: Capacitor (for Android builds)
+## Getting Started
 
-## Installation
+### Creating Your First Account
 
-### Prerequisites
+Navigate to the **Accounts** section and click "New Account". Provide an account name, select the type (checking, savings, etc.), enter the initial balance, and choose your currency. Your account is now ready to track transactions.
 
-Ensure you have the following installed on your system:
+### Adding Transactions
 
-- Node.js 18 or higher
-- pnpm 10.4.1 or higher (package manager)
+Go to **Transactions** and click "New Transaction". Select the account, transaction type (income or expense), amount, category, and date. Optionally add a description for context. Transactions are immediately reflected in your account balance.
 
-### Setup
+### Setting Up Recurring Bills
 
-Clone the repository and install dependencies:
+Visit **Scheduled Payments** and click "New Payment". Enter the payment name, default amount, frequency, and category. For variable bills, enable "Amount varies (non-constant)" and optionally add a custom reminder message. The system will notify you when bills are due.
 
-```bash
-git clone https://github.com/yourusername/privacy-finance-app.git
-cd privacy-finance-app
-pnpm install
-```
+### Using Templates
 
-## Running the Application
+Create templates in the **Templates** section for frequently repeated transactions. Templates save the transaction type, amount, category, and description. When you need to record the transaction, click "Use Template" to instantly create it.
 
-### Development Mode (Web)
+### Monitoring Your Finances
 
-Start the development server with hot module reloading:
+The **Dashboard** provides an at-a-glance view of your financial status. Monitor your total balance across all accounts, track monthly income and expenses, and review upcoming bills. Non-constant bills due soon are highlighted with action alerts.
 
-```bash
-pnpm dev
-```
+## Data Management
 
-The application will be available at `http://localhost:5173`.
+### Exporting Your Data
 
-### Development Mode (Electron)
+Visit **Settings** and click "Export Backup". Your complete financial data will be downloaded as a JSON file with the current date in the filename. Keep this file safe for backup purposes.
 
-Run the Electron application in development mode:
+### Importing Data
 
-```bash
-pnpm dev:electron
-```
+To restore from a backup, go to **Settings**, click "Import Backup", and select your previously exported JSON file. The application will restore all your accounts, transactions, bills, and templates.
 
-This will start both the Vite development server and the Electron application window. Changes to the code will trigger hot reloads.
+### Clearing Data
 
-### Production Build
+The "Clear All Data" option in Settings permanently deletes all your financial records. Use this only when you want to start fresh. This action cannot be undone.
 
-Build the application for production:
+## Design Philosophy
 
-```bash
-pnpm build
-```
+The application follows a **Minimalist Functional** design approach emphasizing clarity and efficiency. The interface uses an off-white background with charcoal text for comfortable reading, a teal accent color for important actions, and a clean sidebar navigation. All financial amounts are displayed in monospace font for easy scanning and comparison.
 
-This creates an optimized build in the `dist/` directory.
+## Technical Details
 
-## Building for Desktop
+**Technology Stack** — Built with React 19, TypeScript, Tailwind CSS 4, and shadcn/ui components. Uses Wouter for lightweight client-side routing.
 
-### Build for All Platforms
+**Storage** — All data persists in browser localStorage with automatic serialization and deserialization. Data survives browser restarts and remains available offline.
 
-To build Electron packages for your current platform:
+**Offline Capability** — The application is fully functional without internet connectivity. All features work offline, and data is never transmitted to external services.
 
-```bash
-pnpm build:electron
-```
+**Browser Compatibility** — Works on all modern browsers supporting ES2020 and localStorage (Chrome, Firefox, Safari, Edge).
 
-### Platform-Specific Builds
+## Keyboard Navigation
 
-Build for Linux:
+The application supports keyboard-first navigation. Use Tab to move between form fields and buttons, Enter to submit forms or activate buttons, and Escape to close dialogs.
 
-```bash
-pnpm build:electron:linux
-```
+## Tips for Effective Use
 
-Build for Windows:
+**Regular Reconciliation** — For non-constant bills, compare the amounts you confirm in the app with your actual bank statements to maintain accuracy.
 
-```bash
-pnpm build:electron:windows
-```
+**Template Organization** — Create templates for your most frequent transactions to speed up data entry and reduce errors.
 
-Build for macOS:
+**Monthly Reviews** — Check the Dashboard monthly to review your income, expenses, and upcoming bills. This helps identify spending patterns and budget adjustments.
 
-```bash
-pnpm build:electron:mac
-```
+**Backup Regularly** — Export your data regularly, especially before making major changes or after significant transactions.
 
-The built applications will be available in the `dist/` directory with platform-specific installers and portable executables.
+**Category Consistency** — Use consistent category names across transactions to make analysis and filtering more meaningful.
 
-## Building for Android
+## Limitations & Considerations
 
-### Prerequisites
+The application stores data in browser localStorage, which has typical browser storage limits (usually 5-10MB per domain). For most personal finance use cases, this is more than sufficient. However, if you accumulate many years of transaction history, consider archiving old data by exporting and clearing periodically.
 
-- Java Development Kit (JDK) 17 or higher
-- Android SDK
-- Android Studio (optional but recommended)
+Data is tied to your browser profile. If you clear browser data or use a different browser, your financial records will not be available. Always maintain regular backups.
 
-### Build Steps
+## Support & Feedback
 
-1. Build the web application:
-
-```bash
-pnpm build
-```
-
-2. Initialize Capacitor (if not already done):
-
-```bash
-pnpm add -D @capacitor/core @capacitor/cli @capacitor/android
-npx cap init --web-dir dist --app-name "Privacy Finance" --app-id "com.privacyfinance.app"
-```
-
-3. Add Android platform:
-
-```bash
-npx cap add android
-npx cap sync
-```
-
-4. Build the Android APK:
-
-```bash
-cd android
-./gradlew assembleRelease
-```
-
-The APK will be generated at `android/app/build/outputs/apk/release/app-release.apk`.
-
-## Testing
-
-### Type Checking
-
-Verify TypeScript types without building:
-
-```bash
-pnpm check
-```
-
-### Running Tests
-
-The project is configured with Vitest. To run tests:
-
-```bash
-pnpm test
-```
-
-### Manual Testing Checklist
-
-- **Accounts**: Create, edit, and delete accounts. Verify balance updates.
-- **Transactions**: Add income and expense transactions. Verify balance changes.
-- **Templates**: Create templates and use them to pre-fill transactions.
-- **Recurring Payments**: Set up constant and non-constant recurring payments. Verify notifications.
-- **Budgets**: Create budgets and verify spending tracking and alerts.
-- **Offline**: Disconnect from the internet and verify the app continues to function.
-- **Data Persistence**: Close and reopen the app to verify data is persisted.
-
-## Editing and Customization
-
-### Project Structure
-
-```
-privacy-finance-app/
-├── client/
-│   ├── src/
-│   │   ├── pages/           # Page components
-│   │   ├── components/      # Reusable UI components
-│   │   ├── contexts/        # React contexts (FinanceContext)
-│   │   ├── lib/             # Utility functions (db.ts, scheduler.ts)
-│   │   ├── App.tsx          # Main app component with routing
-│   │   ├── main.tsx         # React entry point
-│   │   └── index.css        # Global styles and Tailwind config
-│   ├── public/              # Static assets (favicon, robots.txt)
-│   └── index.html           # HTML template
-├── electron/
-│   ├── main.ts              # Electron main process
-│   └── preload.ts           # Electron preload script for IPC
-├── .github/
-│   └── workflows/
-│       └── build.yml        # GitHub Actions CI/CD workflow
-├── package.json             # Project configuration and scripts
-└── tsconfig.json            # TypeScript configuration
-```
-
-### Adding New Pages
-
-1. Create a new file in `client/src/pages/` (e.g., `MyNewPage.tsx`)
-2. Implement the page component using React hooks and the `useFinance()` context
-3. Add a route in `client/src/App.tsx` under the `Router` function
-4. Add a navigation link in the `Sidebar` component
-
-### Adding New Features to the Database
-
-1. Define the interface in `client/src/lib/db.ts`
-2. Add a table to the `FinanceDB` class with appropriate indexes
-3. Add CRUD operations to `client/src/contexts/FinanceContext.tsx`
-4. Create UI components to interact with the new feature
-
-### Styling
-
-The application uses Tailwind CSS 4 with custom design tokens defined in `client/src/index.css`. Modify the CSS variables to change the color scheme and spacing system globally. Use shadcn/ui components for consistent, accessible UI elements.
-
-### Modifying Recurring Payment Logic
-
-The scheduling logic is in `client/src/lib/scheduler.ts`. Key functions include:
-
-- `getNextDueDate()`: Calculate when a payment is next due
-- `isPaymentDue()`: Check if a payment is due today
-- `processRecurringPayment()`: Process a payment and update the account balance
-- `getPaymentsDueToday()`: Get all payments due today
-- `getUpcomingPayments()`: Get payments due in the next N days
-
-## GitHub Actions CI/CD
-
-The project includes a GitHub Actions workflow (`.github/workflows/build.yml`) that automatically builds the application for Windows, macOS, Linux, and Android on every push and pull request.
-
-### Workflow Features
-
-- **Multi-platform builds**: Automatically builds for Windows, macOS, and Linux
-- **Android builds**: Compiles APK for Android devices
-- **Artifact storage**: Build artifacts are uploaded and available for download
-- **Release automation**: Tags pushed to the repository trigger automatic releases with built artifacts
-
-### Setting Up CI/CD
-
-1. Push the repository to GitHub
-2. The workflow will automatically trigger on pushes to `main` or `develop` branches
-3. Create a git tag to trigger a release: `git tag v1.0.0 && git push origin v1.0.0`
-4. Built artifacts will be automatically uploaded to the GitHub Release
-
-## Data Storage and Privacy
-
-All financial data is stored locally using Dexie.js (IndexedDB). The application does not:
-
-- Send data to external servers
-- Require an internet connection
-- Collect or track user behavior
-- Store credentials or sensitive information in the cloud
-
-Your data remains entirely on your device. If you want to back up your data, export your browser's IndexedDB database or use your operating system's file backup tools.
-
-## Troubleshooting
-
-### Application won't start
-
-- Ensure Node.js 18+ is installed: `node --version`
-- Clear the node_modules and reinstall: `rm -rf node_modules && pnpm install`
-- Try clearing the Electron cache: `rm -rf ~/.config/Privacy\ Finance` (Linux/macOS) or `%APPDATA%\Privacy Finance` (Windows)
-
-### Transactions not appearing
-
-- Verify you've selected an account before adding transactions
-- Check the browser console for errors: Press `F12` in the Electron window
-- Ensure IndexedDB is enabled in your browser settings
-
-### Build fails on Windows
-
-- Install Visual Studio Build Tools or Visual Studio Community with C++ support
-- Ensure you're using PowerShell or Command Prompt as Administrator
-
-### Android build fails
-
-- Verify Java 17+ is installed: `java -version`
-- Update Android SDK: `sdkmanager --update`
-- Clear Gradle cache: `cd android && ./gradlew clean`
-
-## Contributing
-
-Contributions are welcome! Please follow these guidelines:
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/my-feature`
-3. Make your changes and commit: `git commit -am 'Add my feature'`
-4. Push to the branch: `git push origin feature/my-feature`
-5. Submit a pull request
+This is a privacy-first personal project designed for individual use. For feature requests or bug reports, review the application code or consider contributing improvements.
 
 ## License
 
-This project is licensed under the MIT License. See the LICENSE file for details.
+This application is provided as-is for personal use.
 
-## Support
+---
 
-For issues, questions, or feature requests, please open an issue on GitHub or contact the maintainers.
-
-## Roadmap
-
-Future enhancements planned for the application include:
-
-- Data export/import in CSV and JSON formats
-- Advanced reporting and analytics
-- Multi-currency support
-- Recurring payment automation with webhook integration
-- Cloud backup and sync (optional, encrypted)
-- Mobile app refinements
-- Dark mode theme
-- Custom categories and tags
-- Transaction search and filtering
-- Bill splitting and expense sharing features
-
-## Acknowledgments
-
-This application is built with open-source technologies including Electron, React, Tailwind CSS, Dexie.js, and many other excellent libraries. Thank you to all the maintainers and contributors of these projects.
+**Remember:** All your financial data stays on your device. No tracking, no cloud storage, no third parties. Your privacy is protected.
